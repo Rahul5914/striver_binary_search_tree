@@ -1,0 +1,174 @@
+Let’s tackle Leetcode 701: Insert into a Binary Search Tree — but in full interview format, just like Nutanix / Google / Uber face-to-face rounds.
+We’ll go through everything step-by-step: interviewer–candidate conversation, intuition, brute force → optimized approach, code (with comments), dry run, complexity, and related follow-ups.
+
+🧠 Problem Understanding
+
+Question:
+Given the root of a Binary Search Tree (BST) and a value to insert into the tree, insert the value into the BST and return the root of the tree.
+
+BST property reminder:
+
+Left child < root < Right child
+
+🗣️ Interviewer–Candidate Dialogue
+
+Interviewer:
+So Rahul, I’d like you to insert a new node into a Binary Search Tree while maintaining its properties.
+Can you tell me how you’d start?
+
+Candidate (you):
+Sure! I know that in a BST:
+
+Every node’s left subtree contains values less than the node’s key.
+
+Every node’s right subtree contains values greater than the node’s key.
+
+So, to insert a value, I can traverse the tree recursively or iteratively and find the correct leaf position where it fits.
+
+🔍 Step 1: Brute Force Thinking (Recursive Approach)
+💡 Intuition
+
+We start from the root:
+
+If the root is NULL, that’s our insertion point — create a new node.
+
+If the value is less than the root’s value → insert into the left subtree.
+
+If the value is greater than the root’s value → insert into the right subtree.
+
+Finally, return the (possibly unchanged) root.
+
+🧩 Recursive Solution (Simple and Elegant)
+🔁 Recurrence Relation:
+insert(root, val):
+    if root == NULL:
+        return new Node(val)
+    if val < root->val:
+        root->left = insert(root->left, val)
+    else:
+        root->right = insert(root->right, val)
+    return root
+
+💻 C++ Code (Recursive)
+// Definition for a binary tree node.
+struct TreeNode {
+    int val;
+    TreeNode *left;
+    TreeNode *right;
+    TreeNode(int x) : val(x), left(NULL), right(NULL) {}
+};
+
+class Solution {
+public:
+    TreeNode* insertIntoBST(TreeNode* root, int val) {
+        // Base case: found a null spot for insertion
+        if (root == NULL)
+            return new TreeNode(val);
+        
+        // If val < current node -> go left
+        if (val < root->val)
+            root->left = insertIntoBST(root->left, val);
+        // Otherwise -> go right
+        else
+            root->right = insertIntoBST(root->right, val);
+        
+        // Return unchanged root pointer
+        return root;
+    }
+};
+
+🧮 Time & Space Complexity
+Metric	Complexity	Reason
+Time	O(h)	We traverse height h of tree (worst case = O(N) for skewed tree, best = O(log N) for balanced BST)
+Space	O(h)	Due to recursion call stack
+🧾 Dry Run Example
+Insert 5 into BST: [4, 2, 7, 1, 3]
+
+          4
+         / \
+        2   7
+       / \
+      1   3
+
+Step 1: 5 > 4 → go right
+Step 2: right = 7, 5 < 7 → go left
+Step 3: left of 7 is NULL → insert here
+
+Result:
+          4
+         / \
+        2   7
+       / \  /
+      1  3 5
+
+
+✅ Works perfectly.
+
+⚙️ Step 2: Iterative Approach
+
+Interviewer:
+That’s good. Can we avoid recursion to save call stack space?
+
+Candidate:
+Yes, we can do it iteratively using a while loop — traverse down until we find a NULL child spot and attach the new node.
+
+💻 Iterative C++ Code
+class Solution {
+public:
+    TreeNode* insertIntoBST(TreeNode* root, int val) {
+        // If tree is empty, new node becomes root
+        if (!root) return new TreeNode(val);
+
+        TreeNode* curr = root;
+        while (true) {
+            // Go left
+            if (val < curr->val) {
+                if (curr->left)
+                    curr = curr->left;
+                else {
+                    curr->left = new TreeNode(val);
+                    break;
+                }
+            }
+            // Go right
+            else {
+                if (curr->right)
+                    curr = curr->right;
+                else {
+                    curr->right = new TreeNode(val);
+                    break;
+                }
+            }
+        }
+        return root;
+    }
+};
+
+⏱️ Time & Space Complexity
+Metric	Complexity
+Time	O(h)
+Space	O(1) — no recursion
+🧩 Pattern Recognition & Interview Tricks
+Pattern	Description
+BST Insertion	Always traverse based on < and > and attach node at first NULL spot
+Template to Remember	if (!root) return newNode; if (val<root->val) root->left = recurse(root->left); else root->right = recurse(root->right); return root;
+When to Use Recursion	When readability > performance
+When to Use Iteration	When stack space matters (large trees)
+💬 Follow-up Questions (Interviewer May Ask)
+
+Q: What if the BST allows duplicate values?
+A: Decide rule — either store duplicates on left/right consistently. For example:
+if (val <= root->val) → go left.
+
+Q: How would you handle insertion in a self-balancing BST (like AVL or Red-Black Tree)?
+A: After insertion, additional rotations are required to maintain balance — that’s beyond standard BST insertion.
+
+Q: What happens if the BST is skewed?
+A: Time degrades to O(N). Balancing trees like AVL or Red-Black solve this.
+
+🧠 Final Interview Tip
+
+✅ Think traversal + condition + attach node.
+Always visualize path until you hit NULL.
+If interviewer asks for optimized space, go iterative.
+If readability is key, go recursive.
