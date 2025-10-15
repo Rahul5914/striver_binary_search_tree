@@ -1,0 +1,283 @@
+Leetcode 98. Validate Binary Search Tree is one of the most fundamental BST interview questions that companies like Nutanix, Visa, Uber, and Google love to ask to test if you truly understand the BST property, recursion boundaries, and inorder traversal reasoning.
+
+Let’s do this the Nutanix-style — a full interview simulation with dialogue, reasoning, dry run, debugging, and reusable C++ templates.
+
+🎯 Problem Statement
+
+Given the root of a binary tree, determine if it is a valid Binary Search Tree (BST).
+
+🧩 Example
+
+Input:
+
+       2
+      / \
+     1   3
+
+
+Output: true
+
+Explanation:
+Inorder traversal = [1, 2, 3] → strictly increasing ✅
+Each node follows BST property.
+
+❌ Counter Example
+       5
+      / \
+     1   4
+        / \
+       3   6
+
+
+Output: false
+
+Why?
+Even though 3 < 4 < 6 looks fine in right subtree,
+node 3 < root 5, but it lies in the right subtree of 5 ❌ — violates BST rule.
+
+🧑‍💼 Interviewer–Candidate Dialogue
+
+Interviewer: What does it mean for a binary tree to be a BST?
+
+You:
+A Binary Search Tree (BST) means:
+
+For every node,
+
+All values in the left subtree < node’s value
+
+All values in the right subtree > node’s value
+
+Both subtrees are themselves BSTs.
+
+🔹 Observation
+
+Inorder traversal of a valid BST always gives a strictly increasing sequence.
+
+🧠 Step 1: Brute Force (Inorder Traversal + Store All)
+
+You:
+We can do an inorder traversal, store all node values in a vector,
+then check if the array is strictly increasing.
+
+💻 Code (Brute Force)
+class Solution {
+public:
+    void inorder(TreeNode* root, vector<int>& vals) {
+        if (!root) return;
+        inorder(root->left, vals);
+        vals.push_back(root->val);
+        inorder(root->right, vals);
+    }
+
+    bool isValidBST(TreeNode* root) {
+        vector<int> vals;
+        inorder(root, vals);
+
+        for (int i = 1; i < vals.size(); i++) {
+            if (vals[i] <= vals[i - 1]) return false;
+        }
+        return true;
+    }
+};
+
+⏱️ Complexity
+
+Time: O(N)
+
+Space: O(N) (storing traversal)
+
+✅ Simple and correct,
+❌ but extra space, and not efficient for huge trees.
+
+🧠 Step 2: Optimized — Inorder Traversal with Previous Pointer
+
+Interviewer: Can we avoid storing all values?
+
+You:
+Yes. While doing inorder traversal, I can just keep track of the previous node value.
+If current node’s value ≤ previous value, then BST property breaks.
+
+💻 Code (Inorder with Prev)
+class Solution {
+public:
+    TreeNode* prev = NULL;
+
+    bool inorder(TreeNode* root) {
+        if (!root) return true;
+
+        // Left subtree
+        if (!inorder(root->left)) return false;
+
+        // Check current node
+        if (prev != NULL && root->val <= prev->val)
+            return false;
+
+        prev = root;
+
+        // Right subtree
+        return inorder(root->right);
+    }
+
+    bool isValidBST(TreeNode* root) {
+        return inorder(root);
+    }
+};
+
+✅ Explanation
+
+We traverse inorder (Left → Root → Right)
+
+Keep track of prev node
+
+Ensure strictly increasing order of values
+
+⏱️ Complexity
+
+Time: O(N)
+
+Space: O(H) recursion stack (no extra array)
+
+🧠 Step 3: Min–Max Range Approach (Most Conceptual)
+
+Interviewer: What if you don’t rely on inorder traversal at all?
+Can you validate the tree top-down, using boundaries?
+
+You:
+Yes — we can recursively validate each node by keeping a valid value range (min, max) it must lie within:
+
+For the root: (-∞, +∞)
+
+For left child: (min, root->val)
+
+For right child: (root->val, max)
+
+If any node violates this, it’s not a BST.
+
+💻 Code (Min–Max Range)
+class Solution {
+public:
+    bool isValid(TreeNode* root, long long minVal, long long maxVal) {
+        if (!root) return true;
+
+        if (root->val <= minVal || root->val >= maxVal)
+            return false;
+
+        return isValid(root->left, minVal, root->val) &&
+               isValid(root->right, root->val, maxVal);
+    }
+
+    bool isValidBST(TreeNode* root) {
+        return isValid(root, LLONG_MIN, LLONG_MAX);
+    }
+};
+
+✅ Why use long long?
+
+To avoid integer overflow if node values are INT_MIN or INT_MAX.
+
+🧪 Dry Run
+
+Example:
+
+        5
+       / \
+      1   4
+         / \
+        3   6
+
+
+Root 5 → range (-∞, +∞)
+
+Left child 1 → valid (−∞, 5)
+
+Right child 4 → must be (5, +∞) ❌ but 4 < 5 → invalid!
+
+Hence return false.
+
+🧩 Pattern Recognition
+
+✅ Inorder traversal → used when checking sorted property
+✅ Min–max range → used for validating structural correctness
+✅ Use long long or nullable pointers to avoid overflow
+✅ Strict inequality (<, >) is crucial — duplicates invalidate BST in Leetcode
+
+🧠 Step 4: Iterative Validation (for completeness)
+
+We can simulate inorder traversal iteratively with a stack.
+
+class Solution {
+public:
+    bool isValidBST(TreeNode* root) {
+        stack<TreeNode*> st;
+        TreeNode* curr = root;
+        TreeNode* prev = NULL;
+
+        while (!st.empty() || curr) {
+            while (curr) {
+                st.push(curr);
+                curr = curr->left;
+            }
+
+            curr = st.top();
+            st.pop();
+
+            if (prev && curr->val <= prev->val)
+                return false;
+
+            prev = curr;
+            curr = curr->right;
+        }
+        return true;
+    }
+};
+
+
+✅ Space: O(H)
+✅ Same logic as recursive inorder
+
+🧠 Time & Space Summary
+Approach	Time	Space	Technique
+Brute Force	O(N)	O(N)	Inorder + vector
+Inorder with Prev	O(N)	O(H)	Recursive
+Min–Max Range	O(N)	O(H)	Boundary constraints
+Iterative	O(N)	O(H)	Stack-based inorder
+💬 Common Pitfalls (Asked in Debugging Round)
+
+Using <= or >= incorrectly — BST requires strict inequality.
+
+Forgetting that the right subtree’s left child must also be greater than the root.
+
+Using int instead of long long — causes overflow.
+
+Misusing global/static prev between multiple test cases (important in Leetcode).
+
+🔁 Related Follow-ups
+
+Kth Smallest / Largest Element in BST → (Uses inorder traversal logic)
+
+Lowest Common Ancestor in BST → (Uses BST property to move left/right)
+
+Recover BST → (Use inorder to find swapped nodes)
+
+Validate Binary Tree (not BST) → check structural only, not values
+
+🧩 Reusable Interview Template (C++)
+bool isValidBST(TreeNode* root) {
+    function<bool(TreeNode*, long long, long long)> dfs = [&](TreeNode* node, long long low, long long high) {
+        if (!node) return true;
+        if (node->val <= low || node->val >= high) return false;
+        return dfs(node->left, low, node->val) && dfs(node->right, node->val, high);
+    };
+    return dfs(root, LLONG_MIN, LLONG_MAX);
+}
+
+
+✅ Short, safe, and production-quality.
+
+🧠 Interviewer’s Verdict
+
+✅ Great understanding of BST property
+✅ Knew multiple approaches (value range and inorder)
+✅ Mentioned overflow and duplicates
+✅ Demonstrated both conceptual and implementation clarity
