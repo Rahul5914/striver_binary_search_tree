@@ -1,0 +1,428 @@
+Perfect ✅
+Now let’s go through Leetcode 236 — Lowest Common Ancestor of a Binary Tree
+in full Nutanix / FAANG interview style, where the interviewer expects deep reasoning, debugging ability, and difference from BST version.
+
+🧩 236. Lowest Common Ancestor of a Binary Tree
+🔹 Problem Statement
+Given a binary tree (not necessarily a BST), find the lowest common ancestor (LCA) of two given nodes p and q.
+
+The LCA is the lowest node in the tree that has both p and q as descendants.
+A node can be a descendant of itself.
+
+Example
+markdown
+Copy code
+         3
+        / \
+       5   1
+      / \ / \
+     6  2 0  8
+       / \
+      7  4
+Input: root = [3,5,1,6,2,0,8,null,null,7,4], p = 5, q = 1
+Output: 3
+Explanation: LCA(5,1) = 3
+
+🔹 Interview Dialogue (Realistic FAANG/Nutanix Style)
+👨‍💼 Interviewer:
+You solved the BST LCA efficiently using properties. Now, what if I remove the BST property — just a normal binary tree?
+
+👨‍💻 You:
+Then we can’t use value comparisons like < or >.
+We must traverse the entire tree and find where both nodes p and q exist.
+
+👨‍💼 Interviewer:
+Exactly. So how would you detect that a node is their lowest common ancestor?
+
+👨‍💻 You:
+For each node, we can recursively check:
+
+If p and q are in different subtrees, then that node is the LCA.
+
+If both are in left or right, continue exploring that side.
+
+If current node is p or q, and the other node lies in its subtree → this node is also the LCA.
+
+🔹 Step-by-Step Reasoning
+Let’s define a recursive function LCA(root, p, q):
+
+If root is nullptr → return nullptr
+
+If root equals p or q → return root
+
+Recur for left and right subtree:
+
+ini
+Copy code
+left = LCA(root->left, p, q)
+right = LCA(root->right, p, q)
+If both left and right are non-null, then current root is LCA (split point).
+
+Else, return the non-null side.
+
+🔹 Recurrence Relation
+sql
+Copy code
+LCA(root, p, q) = 
+    root                     if root == p or root == q
+    LCA(root->left, p, q)    if both p,q are in left
+    LCA(root->right, p, q)   if both p,q are in right
+    root                     if one in left and one in right
+🔹 Approach 1: Recursive DFS Solution
+🔧 Intuition:
+We explore the tree like a post-order traversal (L, R, Root) —
+we first find results in left and right, then decide for the current node.
+
+✅ Code (C++):
+cpp
+Copy code
+class Solution {
+public:
+    TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+        // Base case: if root is null or one of the targets found
+        if (!root || root == p || root == q)
+            return root;
+
+        // Search in left and right subtrees
+        TreeNode* left = lowestCommonAncestor(root->left, p, q);
+        TreeNode* right = lowestCommonAncestor(root->right, p, q);
+
+        // If both sides return non-null → current node is LCA
+        if (left && right)
+            return root;
+
+        // Otherwise, return the non-null child
+        return left ? left : right;
+    }
+};
+🧮 Complexity
+Time: O(N) — we visit every node once
+
+Space: O(H) — recursion stack (H = tree height)
+
+🔹 Approach 2: Parent Mapping + BFS (Iterative)
+Interviewer follow-up:
+What if I ask you to find LCA iteratively, without recursion?
+
+Your Thought:
+We can use a parent map for every node, then trace the ancestors.
+
+Steps:
+Use DFS/BFS to store each node’s parent.
+
+Store all ancestors of p in a set.
+
+Move upward from q to the root — the first ancestor found in the set is the LCA.
+
+Code:
+cpp
+Copy code
+class Solution {
+public:
+    TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+        unordered_map<TreeNode*, TreeNode*> parent;
+        queue<TreeNode*> qn;
+        qn.push(root);
+        parent[root] = nullptr;
+
+        // Step 1: Build parent map using BFS
+        while (!parent.count(p) || !parent.count(q)) {
+            TreeNode* node = qn.front();
+            qn.pop();
+
+            if (node->left) {
+                parent[node->left] = node;
+                qn.push(node->left);
+            }
+            if (node->right) {
+                parent[node->right] = node;
+                qn.push(node->right);
+            }
+        }
+
+        // Step 2: Store ancestors of p
+        unordered_set<TreeNode*> ancestors;
+        while (p) {
+            ancestors.insert(p);
+            p = parent[p];
+        }
+
+        // Step 3: Move upward from q until we hit an ancestor of p
+        while (!ancestors.count(q))
+            q = parent[q];
+
+        return q;
+    }
+};
+⏱️ Time Complexity: O(N)
+💾 Space Complexity: O(N)
+
+🔹 Dry Run
+Tree:
+
+markdown
+Copy code
+        3
+       / \
+      5   1
+     / \ / \
+    6  2 0  8
+      / \
+     7  4
+Find LCA(5,1):
+
+Node	Left Result	Right Result	Return
+6	null	null	null
+2	7→null, 4→null	→ null	
+5	found p	null	p (5)
+1	found q	null	q (1)
+3	left=p, right=q	✅ return 3	
+
+✔️ LCA = 3
+
+🔹 Common Pitfalls
+❌ Returning too early when one subtree returns null
+✅ Remember post-order structure (process children first)
+❌ Confusing this logic with BST property-based approach
+
+🔹 Follow-up Questions (asked in FAANG & Nutanix)
+What if nodes p or q do not exist in tree?
+→ Add existence check first.
+
+What if tree is very deep (skewed)?
+→ Recursion can cause stack overflow → use parent map iterative approach.
+
+How to find distance between p and q using LCA?
+→ dist(p, q) = depth(p) + depth(q) - 2 * depth(LCA)
+
+🔹 Pattern Recognition
+Concept	Trick
+Binary Tree	Use post-order traversal
+BST	Use value comparison to move left/right
+Split Point	When one node found in each subtree
+Template	Reusable for any “find common node” problems (like path intersection)
+
+🔹 Interview Comparison Summary
+Feature	BST LCA (Leetcode 235)	Binary Tree LCA (Leetcode 236)
+Uses value property	✅ Yes	❌ No
+Traversal Type	Conditional (guided)	Full tree traversal
+Time Complexity	O(h)	O(n)
+Space Complexity	O(1) / O(h)	O(h)
+Pattern	Move left/right	Post-order recursion
+
+Would you like me to now give the debugging-style dry run (like Nutanix round 2 whiteboard simulation) — where interviewer gives tricky cases like “one node is ancestor of the other”?
+That’s a favorite follow-up in FAANG too.
+
+
+
+
+
+
+
+You said:
+yes
+
+
+ChatGPT said:
+Awesome 💪
+Let’s now go through the debugging-style dry run of LCA in a Binary Tree (Leetcode 236) exactly how it happens in a Nutanix / FAANG final-round whiteboard session.
+
+🎯 Debugging Simulation — Nutanix / FAANG Interview
+Scenario:
+You’ve written your recursive code for LCA (from above).
+Now the interviewer tests your edge-case reasoning and dry-run debugging skills.
+
+🧩 Code Reminder (Recursive LCA)
+cpp
+Copy code
+TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+    if (!root || root == p || root == q)
+        return root;
+
+    TreeNode* left = lowestCommonAncestor(root->left, p, q);
+    TreeNode* right = lowestCommonAncestor(root->right, p, q);
+
+    if (left && right)
+        return root;
+
+    return left ? left : right;
+}
+🧠 Interviewer Setup
+👨‍💼 Interviewer:
+Let’s dry run this code on a few edge cases.
+
+🧩 Case 1 — One Node Is Ancestor of the Other
+Tree:
+
+markdown
+Copy code
+        3
+       / \
+      5   1
+     / \
+    6   2
+       / \
+      7  4
+We’re finding LCA(5,4).
+
+▶️ Dry Run
+Call	root	Return
+LCA(3,5,4)	root=3	
+→ left = LCA(5,5,4)	root=5==p ✅ return 5	
+→ right = LCA(1,5,4)	no match → null	
+Now left=5, right=null → return left (5)		
+
+✅ Answer = 5
+
+👨‍💼 Interviewer:
+Why did we return 5 even though 4 is deeper?
+
+👨‍💻 You:
+Because the algorithm returns the node if it matches p or q — that node can be an ancestor.
+When we find p and later discover q is in its subtree, that p becomes the LCA.
+
+💡 Key Insight:
+
+If one node is ancestor of the other → ancestor itself is the LCA.
+
+🧩 Case 2 — Nodes on Different Sides
+Find LCA(5,1) (Classic case).
+
+markdown
+Copy code
+        3
+       / \
+      5   1
+Call	root	left	right	Return
+3	→ LCA(5,1)	left=p, right=q	return root=3	
+
+✅ Answer = 3
+
+🧩 Case 3 — Both in Left Subtree
+Find LCA(6,4)
+
+markdown
+Copy code
+        3
+       / \
+      5   1
+     / \
+    6   2
+       / \
+      7  4
+Step-by-Step:
+
+root=3
+
+left = LCA(5,6,4)
+
+right = null
+
+In subtree rooted at 5:
+
+left = LCA(6,6,4) → returns 6
+
+right = LCA(2,6,4)
+
+left = LCA(7,6,4) → null
+
+right = LCA(4,6,4) → returns 4
+→ return 2 (split point)
+
+Now left=6, right=2 → return 5
+
+root=3 → left=5, right=null → return 5
+
+✅ Answer = 5
+
+🧩 Case 4 — Only One Node Exists in Tree
+Find LCA(5,10) (10 is not in tree)
+
+markdown
+Copy code
+        3
+       / \
+      5   1
+Dry Run:
+
+Step	root	Result
+LCA(3,5,10)	left = LCA(5,5,10) = 5	right = LCA(1,5,10) = null
+Return left = 5		
+
+✅ Output = 5
+⚠️ But 10 doesn’t exist, so answer is invalid logically.
+
+👨‍💼 Interviewer:
+How would you fix this?
+
+👨‍💻 You:
+We can modify our recursion to also track existence:
+
+Perform a DFS returning (foundNode, foundCount).
+
+After recursion, ensure both p and q are found before returning the answer.
+
+Example:
+
+cpp
+Copy code
+bool find(TreeNode* root, TreeNode* target) {
+    if (!root) return false;
+    if (root == target) return true;
+    return find(root->left, target) || find(root->right, target);
+}
+
+TreeNode* LCA(TreeNode* root, TreeNode* p, TreeNode* q) {
+    TreeNode* lca = lowestCommonAncestor(root, p, q);
+    if (find(root, p) && find(root, q))
+        return lca;
+    return nullptr;  // One node missing
+}
+🧩 Case 5 — Skewed Tree (Deep Recursion)
+markdown
+Copy code
+     1
+      \
+       2
+        \
+         3
+          \
+           4
+Find LCA(2,4)
+→ Traversal is one-directional (no branching).
+✅ Works fine but recursion depth = height of tree.
+
+👨‍💼 Interviewer:
+What’s the drawback?
+👨‍💻 You:
+Stack overflow for very deep trees (~10⁵).
+So we can switch to an iterative parent map approach.
+
+🧩 Summary Table of All Scenarios
+Case	Scenario	Expected LCA	Behavior
+1	One node ancestor of another	Ancestor itself	✅ correct
+2	Nodes on different sides	Common root	✅ correct
+3	Both in same subtree	Deepest common node	✅ correct
+4	One node missing	Should handle explicitly	⚠️ need existence check
+5	Deep skewed tree	Works but stack-heavy	⚠️ iterative version better
+
+🧠 Key Debugging Insights
+Tip	Why Important
+Base case order matters	Must check `root == p
+Return from children correctly	Use left ? left : right
+Test ancestor cases	Very common interviewer trick
+Add existence validation	Avoid wrong LCA for missing nodes
+Consider stack depth	Optimize using parent mapping for huge trees
+
+🔹 Pattern Recognition (Final Revision Tip)
+Category	Pattern	Example Problems
+Binary Tree	Post-order traversal based LCA	236. LCA of Binary Tree
+BST	Guided traversal using values	235. LCA of BST
+Graph/Parent Mapping	Parent + Ancestor set	1650. LCA of N-ary Tree
+Ancestor Case	Node itself can be LCA	Common interview trap
+
+🔥 Final Takeaway for Interviews (Nutanix, Google, Amazon):
+
+When you hear “LCA,” first identify the tree type (BST vs Binary Tree).
+Then use the correct traversal pattern.
+Always dry-run ancestor edge cases — it’s a favorite debugging trap question.
