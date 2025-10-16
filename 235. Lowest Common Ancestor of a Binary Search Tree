@@ -1,0 +1,159 @@
+Let’s go through Leetcode 235 — Lowest Common Ancestor of a Binary Search Tree in a full interview-style format, the way it’s asked at Nutanix / FAANG final rounds (systematic debugging, dry-run, and code mastery).
+
+🔹 Problem Statement
+
+Given a Binary Search Tree (BST), find the lowest common ancestor (LCA) of two given nodes p and q.
+
+The LCA of two nodes p and q is defined as the lowest node in the BST that has both p and q as descendants (a node can be descendant of itself).
+
+🔹 Example
+        6
+       / \
+      2   8
+     / \ / \
+    0  4 7 9
+      / \
+     3  5
+
+
+Input: root = [6,2,8,0,4,7,9,null,null,3,5], p = 2, q = 8
+Output: 6
+Explanation: The LCA of nodes 2 and 8 is 6.
+
+🔹 Interview Dialogue (Nutanix / FAANG Style)
+
+👨‍💼 Interviewer:
+Before you jump into coding — can you explain what Lowest Common Ancestor means in your own words?
+
+👨‍💻 Candidate (You):
+Sure. The lowest common ancestor (LCA) of two nodes p and q in a binary tree is the deepest node that has both p and q in its subtree. In a BST, we can take advantage of the property:
+
+For any node, all nodes in the left subtree are smaller, and all nodes in the right subtree are greater.
+
+So, we don’t need to search the entire tree — we can use value comparison to move left or right.
+
+🔹 Step-by-Step Thought Process
+🧠 Step 1: Use BST Property
+
+If both p and q are less than root, LCA lies in left subtree.
+
+If both are greater than root, LCA lies in right subtree.
+
+Otherwise, root is split point, i.e., the LCA.
+
+🔹 Recurrence Relation
+
+If root is not null:
+
+if (p.val < root.val && q.val < root.val)
+    return LCA(root.left, p, q)
+else if (p.val > root.val && q.val > root.val)
+    return LCA(root.right, p, q)
+else
+    return root
+
+🔹 Approach 1: Recursive Solution
+
+Logic:
+
+Base condition: if root is null → return null.
+
+Use the above recurrence.
+
+C++ Code:
+
+class Solution {
+public:
+    TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+        // Base case
+        if (!root) return nullptr;
+
+        // If both p and q are smaller than root, go left
+        if (p->val < root->val && q->val < root->val)
+            return lowestCommonAncestor(root->left, p, q);
+
+        // If both p and q are greater than root, go right
+        if (p->val > root->val && q->val > root->val)
+            return lowestCommonAncestor(root->right, p, q);
+
+        // Otherwise, we found the split point — this is the LCA
+        return root;
+    }
+};
+
+
+⏱️ Time Complexity: O(h), where h = height of BST
+💾 Space Complexity: O(h) (due to recursion stack)
+
+🔹 Approach 2: Iterative Solution (Optimized for Space)
+
+Idea:
+Instead of recursion, keep traversing the tree until the LCA condition is met.
+
+C++ Code:
+
+class Solution {
+public:
+    TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+        while (root) {
+            // Move left if both are smaller
+            if (p->val < root->val && q->val < root->val)
+                root = root->left;
+            // Move right if both are greater
+            else if (p->val > root->val && q->val > root->val)
+                root = root->right;
+            else
+                return root;  // Split point found
+        }
+        return nullptr;
+    }
+};
+
+
+⏱️ Time Complexity: O(h)
+💾 Space Complexity: O(1)
+
+🔹 Dry Run
+
+Let’s take the earlier BST example:
+
+root = 6, p = 2, q = 8
+
+Step	root	p->val	q->val	Decision
+1	6	2	8	Split point found → return 6
+
+✅ LCA = 6
+
+Another case:
+
+root = 6, p = 2, q = 4
+
+Step	root	p->val	q->val	Decision
+1	6	2	4	both < 6 → go left
+2	2	2	4	split point found → return 2
+
+✅ LCA = 2
+
+🔹 Common Pitfalls
+
+❌ Confusing this with Binary Tree LCA (236) — that problem doesn’t use BST properties and needs a full traversal.
+✅ Here, BST property allows us to find LCA in O(h) by moving down a single path.
+
+🔹 Related / Follow-up Questions
+
+These are usually asked in the same interview thread:
+
+[236. Lowest Common Ancestor of Binary Tree] – same question, but without BST property.
+
+How would you modify this if given only values (integers) of p and q, not nodes?
+
+How to find distance between two nodes in BST using LCA?
+
+How to insert or delete nodes in BST? (because this builds intuition about structure)
+
+🔹 Pattern & Tricks to Remember
+Concept	Trick
+BST Traversal	Always use value comparison (<, >) to navigate left/right
+LCA Split	If one node on left and one on right → current node is LCA
+Symmetry	Works regardless of whether p < q or q < p
+Interview Tip	Always confirm you’re solving for BST or general Binary Tree before coding
