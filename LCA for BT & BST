@@ -1,0 +1,266 @@
+Perfect 🔥
+Below is your combined “LCA (Lowest Common Ancestor)” GitHub-style revision sheet — covering both BST (Leetcode 235) and Binary Tree (Leetcode 236) — crafted exactly like Striver-style notes + FAANG/Nutanix interview expectations.
+
+🌳 Lowest Common Ancestor — Complete Interview Sheet
+
+(For BST & Binary Tree)
+
+🧩 1️⃣ LCA in a Binary Search Tree
+
+Leetcode 235. Lowest Common Ancestor of a BST
+
+🔹 Intuition
+
+BST has an ordered structure:
+
+Left subtree → smaller values
+
+Right subtree → larger values
+
+So:
+
+If both p and q are smaller than root → go left
+
+If both are greater → go right
+
+Otherwise, current node is the split point → LCA
+
+🔹 Recursive Solution
+class Solution {
+public:
+    TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+        if (!root) return nullptr;
+
+        if (p->val < root->val && q->val < root->val)
+            return lowestCommonAncestor(root->left, p, q);
+
+        if (p->val > root->val && q->val > root->val)
+            return lowestCommonAncestor(root->right, p, q);
+
+        return root;  // Split point found
+    }
+};
+
+🔹 Iterative Solution
+class Solution {
+public:
+    TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+        while (root) {
+            if (p->val < root->val && q->val < root->val)
+                root = root->left;
+            else if (p->val > root->val && q->val > root->val)
+                root = root->right;
+            else
+                return root; // Split point
+        }
+        return nullptr;
+    }
+};
+
+🔹 Complexity
+Time	Space
+O(h)	O(1) iterative / O(h) recursive
+🔹 Dry Run Example
+BST:     6
+        / \
+       2   8
+      / \ / \
+     0  4 7  9
+       / \
+      3  5
+
+p=2, q=8 → split at 6 → LCA = 6  
+p=2, q=4 → split at 2 → LCA = 2
+
+✅ Pattern Recap (BST)
+Condition	Move
+p,q < root	root = root->left
+p,q > root	root = root->right
+Else	root is LCA
+💡 Interview Tips
+
+Always confirm “BST” before using < and >.
+
+Easy to confuse with Binary Tree version.
+
+O(h) single-path traversal → super efficient.
+
+🧩 2️⃣ LCA in a Binary Tree
+
+Leetcode 236. Lowest Common Ancestor of a Binary Tree
+
+🔹 Intuition
+
+No BST property → must explore entire tree.
+We use post-order traversal (Left → Right → Node).
+
+At each node:
+
+If p and q lie on different sides → this node is LCA.
+
+If current node is one of them → current node might be LCA.
+
+🔹 Recursive Solution (Most Common in Interviews)
+class Solution {
+public:
+    TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+        // Base condition
+        if (!root || root == p || root == q)
+            return root;
+
+        // Search in subtrees
+        TreeNode* left = lowestCommonAncestor(root->left, p, q);
+        TreeNode* right = lowestCommonAncestor(root->right, p, q);
+
+        // If both left and right return non-null → current node is LCA
+        if (left && right) return root;
+
+        // Otherwise, return whichever side is non-null
+        return left ? left : right;
+    }
+};
+
+🔹 Iterative (Parent Map) Version
+class Solution {
+public:
+    TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+        unordered_map<TreeNode*, TreeNode*> parent;
+        queue<TreeNode*> qn;
+        qn.push(root);
+        parent[root] = nullptr;
+
+        // Step 1: Build parent map
+        while (!parent.count(p) || !parent.count(q)) {
+            TreeNode* node = qn.front();
+            qn.pop();
+
+            if (node->left) {
+                parent[node->left] = node;
+                qn.push(node->left);
+            }
+            if (node->right) {
+                parent[node->right] = node;
+                qn.push(node->right);
+            }
+        }
+
+        // Step 2: Store ancestors of p
+        unordered_set<TreeNode*> ancestors;
+        while (p) {
+            ancestors.insert(p);
+            p = parent[p];
+        }
+
+        // Step 3: Move upward from q until we hit a common ancestor
+        while (!ancestors.count(q))
+            q = parent[q];
+
+        return q;
+    }
+};
+
+🔹 Complexity
+Time	Space
+O(N)	O(H) recursion / O(N) iterative
+🔹 Debugging Dry Run
+
+Example:
+
+         3
+        / \
+       5   1
+      / \ / \
+     6  2 0  8
+       / \
+      7  4
+
+Case	Input	Output	Explanation
+1	p=5, q=1	3	Split at 3
+2	p=6, q=4	5	Both in left subtree
+3	p=5, q=4	5	One node is ancestor
+4	p=5, q=10	null	One node missing (handle separately)
+⚠️ Edge Case Handling
+
+Add find(root, p) and find(root, q) to ensure both nodes exist:
+
+bool exists(TreeNode* root, TreeNode* x) {
+    if (!root) return false;
+    if (root == x) return true;
+    return exists(root->left, x) || exists(root->right, x);
+}
+
+
+Then only return LCA if both exist.
+
+💡 Key Observations
+Concept	Insight
+Traversal Type	Post-order
+Base Case	if (!root
+Split Detection	left && right != null
+Ancestor Case	if root == p && q in subtree → LCA = p
+Depth Safety	Use iterative parent map for deep trees
+🧠 Combined Comparison
+Feature	BST (235)	Binary Tree (236)
+Uses value ordering	✅ Yes	❌ No
+Traversal direction	Guided	Full traversal
+Time Complexity	O(h)	O(n)
+Space Complexity	O(1)	O(h)
+Split logic	Value-based	Subtree-based
+Edge Cases	Simple	Ancestor, missing node, deep tree
+Template Type	Iterative/Recursive	Post-order recursive
+🧮 Common Patterns and Variations
+Variation	Approach
+LCA in BST	Use < and > property
+LCA in Binary Tree	DFS post-order
+LCA when nodes may not exist	Add existence check
+Distance between two nodes	dist(p,q) = depth(p)+depth(q)-2*depth(LCA)
+LCA in N-ary tree	Parent Map + Set
+LCA in DAG / Graph	Tarjan’s offline LCA (Union-Find)
+🧩 Reusable Template Snippet
+TreeNode* LCA(TreeNode* root, TreeNode* p, TreeNode* q) {
+    if (!root || root == p || root == q) return root;
+    TreeNode* left = LCA(root->left, p, q);
+    TreeNode* right = LCA(root->right, p, q);
+    if (left && right) return root;
+    return left ? left : right;
+}
+
+
+✅ Works for Binary Tree
+For BST, just change the logic to value comparison.
+
+💎 Final Interview Takeaways
+🧠 “Think before coding”
+
+Ask: Is it a BST or just a Binary Tree?
+
+Use BST property only if guaranteed.
+
+🧱 “Base condition correctness”
+
+if (!root || root == p || root == q) return root;
+This line avoids missing the ancestor scenario.
+
+🧗 “Depth handling”
+
+Recursive → elegant but stack-heavy
+
+Parent-map → better for iterative or large trees
+
+🧩 “Pattern you’ll reuse”
+
+Post-order recursion + return non-null child = core pattern for tree-based questions.
+
+🧾 Recommended Revision Order
+
+235 — LCA in BST
+
+236 — LCA in Binary Tree
+
+Edge Case: Ancestor node
+
+Distance between two nodes using LCA
+
+LCA with missing nodes
+
+Iterative + Parent Map versions
