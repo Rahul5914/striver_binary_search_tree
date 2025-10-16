@@ -1,0 +1,185 @@
+Let’s go interview-style, step by step, for 653. Two Sum IV - Input is a BST. I’ll cover the thought process, multiple approaches, optimizations, and code templates.
+
+Problem Statement
+
+Given the root of a BST and an integer k, return true if there exist two elements in the BST such that their sum is equal to k.
+
+Example:
+
+Input: root = [5,3,6,2,4,null,7], k = 9
+Output: true
+
+Step 1: Clarify with Interviewer
+
+Can we assume all node values are unique? ✅ Usually yes for BST.
+
+Do we need O(n) time? Can we use extra space? ✅ Space O(n) is fine initially.
+
+Can we exploit the BST property? ✅ Yes, for optimized solution.
+
+Step 2: Brute Force (Naive)
+
+Idea:
+
+Traverse the BST in any order (inorder, preorder, postorder).
+
+Store values in a list.
+
+Use 2-pointer or HashSet to check if any two numbers sum to k.
+
+Approach:
+
+Do inorder traversal → get sorted array arr.
+
+Use 2-pointer technique to check for sum = k.
+
+Time Complexity: O(n)
+Space Complexity: O(n) (for array)
+
+Code:
+
+class Solution {
+public:
+    vector<int> nums;
+    
+    void inorder(TreeNode* root) {
+        if (!root) return;
+        inorder(root->left);
+        nums.push_back(root->val);
+        inorder(root->right);
+    }
+    
+    bool findTarget(TreeNode* root, int k) {
+        inorder(root);
+        int l = 0, r = nums.size() - 1;
+        while (l < r) {
+            int sum = nums[l] + nums[r];
+            if (sum == k) return true;
+            else if (sum < k) l++;
+            else r--;
+        }
+        return false;
+    }
+};
+
+
+✅ Interview Tip: Always mention that inorder traversal of BST gives sorted order, which makes two-pointer feasible.
+
+Step 3: HashSet Approach (Faster in Practice)
+
+Idea:
+
+Traverse BST.
+
+For each node, check if k - node->val exists in a HashSet.
+
+If yes → return true, else → add node->val to set.
+
+Time Complexity: O(n)
+Space Complexity: O(n)
+
+Code:
+
+class Solution {
+public:
+    bool findTarget(TreeNode* root, int k) {
+        unordered_set<int> seen;
+        return dfs(root, k, seen);
+    }
+
+    bool dfs(TreeNode* node, int k, unordered_set<int>& seen) {
+        if (!node) return false;
+        if (seen.count(k - node->val)) return true;
+        seen.insert(node->val);
+        return dfs(node->left, k, seen) || dfs(node->right, k, seen);
+    }
+};
+
+
+✅ Interview Tip:
+
+Explain why HashSet is O(1) average lookup.
+
+Simple DFS traversal, avoids building extra array.
+
+Step 4: Optimized BST Approach (O(n) time, O(h) space)
+
+Idea:
+
+Use BST iterators like two-pointer without converting to array.
+
+Implement inorder iterator (smallest → largest) and reverse inorder iterator (largest → smallest).
+
+Move left/right iteratively to find the sum.
+
+Time Complexity: O(n) worst-case
+Space Complexity: O(h) for stacks
+
+Code Template:
+
+class BSTIterator {
+    stack<TreeNode*> st;
+    bool reverse;
+public:
+    BSTIterator(TreeNode* root, bool rev) : reverse(rev) {
+        pushAll(root);
+    }
+    
+    int next() {
+        TreeNode* node = st.top(); st.pop();
+        if (!reverse) pushAll(node->right);
+        else pushAll(node->left);
+        return node->val;
+    }
+    
+    bool hasNext() {
+        return !st.empty();
+    }
+
+private:
+    void pushAll(TreeNode* node) {
+        while (node) {
+            st.push(node);
+            node = reverse ? node->right : node->left;
+        }
+    }
+};
+
+class Solution {
+public:
+    bool findTarget(TreeNode* root, int k) {
+        if (!root) return false;
+        BSTIterator l(root, false);
+        BSTIterator r(root, true);
+        
+        int i = l.next();
+        int j = r.next();
+        
+        while (i < j) {
+            int sum = i + j;
+            if (sum == k) return true;
+            else if (sum < k) i = l.next();
+            else j = r.next();
+        }
+        return false;
+    }
+};
+
+
+✅ Interview Tip:
+
+This is the true BST two-pointer technique, uses O(h) space, perfect for large BSTs.
+
+Mention trade-offs: HashSet simpler but uses O(n) space; iterator approach uses less space.
+
+Step 5: Recap / Interview Strategy
+
+Clarify constraints (duplicates? space?)
+
+Brute Force → 2-pointer on array (O(n) space)
+
+DFS + HashSet (simplest, O(n) space)
+
+Optimized → BST iterator two-pointer (O(h) space)
+
+Dry-run examples, edge cases: empty tree, k = 2*val, etc.
